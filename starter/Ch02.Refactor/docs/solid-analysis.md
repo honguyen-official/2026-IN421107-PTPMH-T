@@ -1,49 +1,33 @@
-# SOLID Analysis - ClubManager
+# Phan tich vi pham SOLID — ClubManager (starter)
 
-## 1. Single Responsibility Principle (SRP)
+File phan tich: Ch02.Refactor/ClubManager.cs.
 
-- **Vị trí:** `ClubManager.cs`, phương thức `CreateClub()`.
-- **Vi phạm:** Phương thức vừa kiểm tra dữ liệu, tạo câu lạc bộ, lưu dữ liệu, ghi log và gửi thông báo.
-- **Hậu quả:** Khi thay đổi quy tắc kiểm tra, cơ chế lưu trữ hoặc cách gửi thông báo, phải sửa cùng một phương thức. Điều này làm tăng độ phức tạp và nguy cơ phát sinh lỗi.
+## 1. SRP — CreateClub lam 3 viec trong 1 method (dong 35)
+- Dong nao: dong 35; validate (dong 38-41), luu (dong 44-45), gui thong bao (dong 52-63).
+- Nguyen tac: Single Responsibility — mot method chi nen co mot ly do de thay doi.
+- Hau qua: sua cach gui mail co the lam hong phan validate; muon tao CLB ma khong gui mail thi khong lam duoc; viet unit test phai test ca 3 viec cung luc.
 
-## 2. Open/Closed Principle (OCP)
+## 2. DIP — ghi file truc tiep trong logic nghiep vu (dong 48, 79, 94, 111)
+- Dong nao: File.AppendAllText o dong 48 (CreateClub), 79 (AddMemberToClub), 94 (CreateEvent), 111 (PrintClubReport).
+- Nguyen tac: Dependency Inversion — khong phu thuoc truc tiep vao file system, ma qua abstraction (IAppLogger).
+- Hau qua: muon doi sang ghi log ra console/database phai sua 4 cho; chay test se ghi file that ra may; khong gia lap duoc logger khi test.
 
-- **Vị trí:** `ClubManager.cs`, phương thức `CreateClub()`, đoạn `if/else` lựa chọn cách gửi thông báo.
-- **Vi phạm:** Việc lựa chọn cách gửi thông báo được viết trực tiếp bằng điều kiện kiểm tra địa chỉ email.
-- **Hậu quả:** Khi bổ sung hoặc thay đổi kênh thông báo, phải sửa code hiện tại thay vì mở rộng thông qua abstraction và implementation mới.
+## 3. OCP — chuoi if/else chon kenh thong bao (dong 52-63)
+- Dong nao: dong 52-63, kiem tra "@gmail.com", "@yahoo.com".
+- Nguyen tac: Open/Closed — mo de mo rong, dong de sua doi.
+- Hau qua: them kenh moi (SMS, Zalo) bat buoc mo method cu ra sua, de gay loi cho code dang chay dung; cang them kenh method cang phinh to. Nen dung Factory.
 
-## 3. Dependency Inversion Principle (DIP)
+## 4. SRP — CreateEvent vua tao su kien vua gui mail (dong 88-97)
+- Dong nao: dong 88, doan gui mail dong 96-97.
+- Nguyen tac: SRP.
+- Hau qua: logic tao su kien dinh cung voi viec gui thong bao; nen dung Observer — EventService chi can bao "da tao su kien", ai quan tam thi tu dang ky nhan.
 
-- **Vị trí:** `ClubManager.cs`, các phương thức gọi `File.AppendAllText()` và `Console.WriteLine()`.
-- **Vi phạm:** Logic nghiệp vụ phụ thuộc trực tiếp vào API ghi file và xuất console, thay vì phụ thuộc vào các abstraction như `IAppLogger` và `INotificationService`.
-- **Hậu quả:** Khó thay thế cơ chế ghi log, khó kiểm thử bằng mock hoặc fake và khó thay đổi hạ tầng mà không ảnh hưởng nghiệp vụ.
+## 5. SRP + OCP — PrintClubReport tron bao cao voi nghiep vu (dong 103-113)
+- Dong nao: dong 103, co ghi log o dong 111.
+- Nguyen tac: SRP (in bao cao lan ghi log) va OCP (muon xuat CSV phai sua method nay).
+- Hau qua: them dinh dang bao cao moi phai sua code cu. Nen dung Strategy: IReportStrategy voi ConsoleReportStrategy, CsvReportStrategy.
 
-## 4. Single Responsibility Principle (SRP)
-
-- **Vị trí:** `ClubManager.cs`, phương thức `CreateEvent()`.
-- **Vi phạm:** Phương thức vừa tạo sự kiện, ghi log và gửi thông báo cho từng thành viên.
-- **Hậu quả:** Thay đổi quy trình thông báo có thể buộc phải sửa logic tạo sự kiện. Nên tách việc tạo sự kiện sang `EventService` và xử lý thông báo qua Observer.
-
-## 5. Open/Closed Principle (OCP)
-
-- **Vị trí:** `ClubManager.cs`, phương thức `PrintClubReport()`.
-- **Vi phạm:** Cách tạo báo cáo gắn trực tiếp với `Console.WriteLine()`, không có abstraction cho các định dạng báo cáo.
-- **Hậu quả:** Muốn bổ sung CSV hoặc định dạng khác phải sửa phương thức hiện tại. Có thể áp dụng Strategy thông qua `IReportStrategy`.
-
-## 6. Single Responsibility Principle (SRP)
-
-- **Vị trí:** `ClubManager.cs`, phương thức `AddMemberToClub()`.
-- **Vi phạm:** Phương thức vừa kiểm tra CLB và giới hạn thành viên, thêm thành viên, ghi log, gửi email và thông báo Slack.
-- **Hậu quả:** Nghiệp vụ quản lý thành viên bị trộn với các trách nhiệm hạ tầng và thông báo, khiến việc bảo trì và kiểm thử khó khăn hơn.
-
-## 7. Dependency Inversion Principle (DIP)
-
-- **Vị trí:** `ClubManager.cs`, các phương thức sử dụng trực tiếp danh sách `_clubs`, `_members` và tự thực hiện việc lưu dữ liệu.
-- **Vi phạm:** Lớp quản lý nghiệp vụ tự sở hữu và thao tác trực tiếp với dữ liệu thay vì làm việc thông qua abstraction repository.
-- **Hậu quả:** Khó thay thế bộ nhớ bằng cơ sở dữ liệu hoặc nguồn lưu trữ khác. Việc tách `IClubRepository` giúp giảm sự phụ thuộc giữa nghiệp vụ và lưu trữ.
-
-## Kết luận
-
-`ClubManager` vi phạm chủ yếu SRP, OCP và DIP do tập trung quá nhiều trách nhiệm, sử dụng các nhánh điều kiện cố định và phụ thuộc trực tiếp vào các API hạ tầng.
-
-Giải pháp refactor là tách các trách nhiệm sang `ClubService`, `EventService`, `ReportService`; sử dụng `IClubRepository`, `IAppLogger`, `INotificationService` để đảo ngược phụ thuộc; đồng thời áp dụng Factory, Decorator, Strategy và Observer để tăng khả năng mở rộng và kiểm thử.
+## 6. DIP — du lieu luu cung bang List trong class (dong 30-31)
+- Dong nao: _clubs, _members o dong 30-31.
+- Nguyen tac: DIP — nen phu thuoc vao IClubRepository thay vi List cu the.
+- Hau qua: muon chuyen sang luu database phai sua ca class; khong thay the duoc cach luu tru khi test.

@@ -1,11 +1,9 @@
-using EduHub.Ch02.Abstractions;
-
 namespace EduHub.Ch02.Notifications;
 
 public class SmsNotificationService : INotificationService
 {
-    public void Send(string recipient, string message)
+    public void Send(string to, string message)
     {
-        Console.WriteLine($"[SMS] to {recipient}: {message}");
+        Console.WriteLine($"[SMS] To: {to} | {message}");
     }
 }

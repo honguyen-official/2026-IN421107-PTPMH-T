@@ -1,29 +1,26 @@
-
-using EduHub.Ch02.Abstractions;
-using EduHub.Ch02.Domain;
+using EduHub.Ch02.Patterns.Strategies;
+using EduHub.Ch02.Repositories;
 
 namespace EduHub.Ch02.Services;
 
 public class ReportService
 {
-    private readonly IClubRepository _repository;
+    private readonly IClubRepository _clubs;
+    private readonly IMemberRepository _members;
 
-    public ReportService(IClubRepository repository)
+    public ReportService(IClubRepository clubs, IMemberRepository members)
     {
-        _repository = repository;
+        _clubs = clubs;
+        _members = members;
     }
 
-    public string Generate(IReportStrategy strategy)
+    // Strategy: cach xuat bao cao do caller quyet dinh thong qua strategy truyen vao.
+    public void GenerateReport(IReportStrategy strategy)
     {
-        var rows = _repository.GetAllClubs()
-            .Select(club => new ClubReportRow
-            {
-                ClubName = club.Name,
-                MemberCount =
-                    _repository.GetMembersByClubId(club.Id).Count
-            })
+        var rows = _clubs.GetAll()
+            .Select(c => new ClubReportRow(c.Name, _members.CountByClub(c.Id)))
             .ToList();
 
-        return strategy.Generate(rows);
+        strategy.Generate(rows);
     }
 }

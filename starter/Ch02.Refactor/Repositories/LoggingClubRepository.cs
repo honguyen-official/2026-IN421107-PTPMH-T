@@ -1,64 +1,36 @@
-
-using EduHub.Ch02.Abstractions;
 using EduHub.Ch02.Domain;
+using EduHub.Ch02.Logging;
 
 namespace EduHub.Ch02.Repositories;
 
-/// <summary>
-/// Decorator bổ sung chức năng ghi log cho repository.
-/// </summary>
+// Decorator: boc IClubRepository de them viec ghi log
+// ma khong can sua class ben trong (OCP).
 public class LoggingClubRepository : IClubRepository
 {
     private readonly IClubRepository _inner;
     private readonly IAppLogger _logger;
 
-    public LoggingClubRepository(
-        IClubRepository inner,
-        IAppLogger logger)
+    public LoggingClubRepository(IClubRepository inner, IAppLogger logger)
     {
         _inner = inner;
         _logger = logger;
     }
 
-    public void AddClub(Club club)
+    public IReadOnlyList<Club> GetAll()
     {
-        _logger.Info($"Adding club: {club.Name}");
-        _inner.AddClub(club);
+        _logger.Log("Truy van danh sach CLB");
+        return _inner.GetAll();
     }
 
-    public Club? GetClubById(Guid id)
+    public Club? GetById(Guid id)
     {
-        _logger.Info($"Getting club: {id}");
-        return _inner.GetClubById(id);
+        _logger.Log($"Truy van CLB {id}");
+        return _inner.GetById(id);
     }
 
-    public IReadOnlyList<Club> GetAllClubs()
+    public void Add(Club club)
     {
-        _logger.Info("Getting all clubs");
-        return _inner.GetAllClubs();
-    }
-
-    public void AddMember(Member member)
-    {
-        _logger.Info($"Adding member: {member.Name}");
-        _inner.AddMember(member);
-    }
-
-    public IReadOnlyList<Member> GetMembersByClubId(Guid clubId)
-    {
-        _logger.Info($"Getting members for club: {clubId}");
-        return _inner.GetMembersByClubId(clubId);
-    }
-
-    public void AddEvent(Event ev)
-    {
-        _logger.Info($"Adding event: {ev.Title}");
-        _inner.AddEvent(ev);
-    }
-
-    public IReadOnlyList<Event> GetEventsByClubId(Guid clubId)
-    {
-        _logger.Info($"Getting events for club: {clubId}");
-        return _inner.GetEventsByClubId(clubId);
+        _logger.Log($"Luu CLB: {club.Name}");
+        _inner.Add(club);
     }
 }

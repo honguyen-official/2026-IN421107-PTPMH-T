@@ -1,29 +1,16 @@
-using EduHub.Ch02.Abstractions;
-using EduHub.Ch02.Domain;
-
 namespace EduHub.Ch02.Notifications;
 
-public class NotificationServiceFactory
-    : INotificationServiceFactory
+// Factory: tap trung viec new notifier vao 1 cho.
+// Them kenh moi = them 1 case o day, khong phai sua lung tung khap noi (OCP).
+public class NotificationServiceFactory : INotificationServiceFactory
 {
-    private readonly Dictionary<
-        NotificationChannel,
-        INotificationService> _services;
-
-    public NotificationServiceFactory(
-        Dictionary<NotificationChannel, INotificationService> services)
-    {
-        _services = services;
-    }
-
     public INotificationService Create(NotificationChannel channel)
     {
-        if (_services.TryGetValue(channel, out var service))
+        return channel switch
         {
-            return service;
-        }
-
-        throw new NotSupportedException(
-            $"Unsupported notification channel: {channel}");
+            NotificationChannel.Sms => new SmsNotificationService(),
+            NotificationChannel.Slack => new SlackNotificationService(),
+            _ => new EmailNotificationService(),
+        };
     }
 }

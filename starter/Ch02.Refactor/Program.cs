@@ -1,69 +1,35 @@
-
-using EduHub.Ch02.Abstractions;
-using EduHub.Ch02.Domain;
 using EduHub.Ch02.Logging;
 using EduHub.Ch02.Notifications;
-using EduHub.Ch02.Reporting;
+using EduHub.Ch02.Patterns.Observers;
+using EduHub.Ch02.Patterns.Strategies;
 using EduHub.Ch02.Repositories;
 using EduHub.Ch02.Services;
 
-// 1. Khởi tạo logger và repository.
-// Decorator bọc InMemoryClubRepository để ghi log.
-IAppLogger logger = new ConsoleAppLogger();
+// Composition root: noi DUY NHAT new cac class cu the.
+IAppLogger logger = new ConsoleLogger();
 
-IClubRepository repository = new LoggingClubRepository(
-    new InMemoryClubRepository(),
-    logger);
+// Decorator: boc repository bang LoggingClubRepository de tu dong ghi log moi lan truy cap.
+IClubRepository clubRepo = new LoggingClubRepository(new InMemoryClubRepository(), logger);
+IMemberRepository memberRepo = new InMemoryMemberRepository();
+IEventRepository eventRepo = new InMemoryEventRepository();
 
-// 2. Factory tạo dịch vụ thông báo theo kênh.
-var notificationServices =
-    new Dictionary<NotificationChannel, INotificationService>
-    {
-        [NotificationChannel.Email] = new EmailNotificationService(),
-        [NotificationChannel.Sms] = new SmsNotificationService(),
-        [NotificationChannel.Slack] = new SlackNotificationService()
-    };
+// Factory: 1 cho duy nhat de tao notifier theo kenh.
+INotificationServiceFactory notificationFactory = new NotificationServiceFactory();
 
-INotificationServiceFactory factory =
-    new NotificationServiceFactory(notificationServices);
+var clubService = new ClubService(clubRepo, memberRepo, logger, notificationFactory);
+var eventService = new EventService(clubRepo, eventRepo, logger);
 
-// 3. ClubService tạo CLB và thêm thành viên.
-var clubService = new ClubService(repository, factory);
+// Observer: dang ky nhan tin khi co su kien moi.
+eventService.Subscribe(new LogNotifier(logger));
+eventService.Subscribe(new EmailNotifier(
+    notificationFactory.Create(NotificationChannel.Email), "president@gmail.com"));
 
-var club = clubService.CreateClub(
-    "Tech Club",
-    "Câu lạc bộ công nghệ",
-    "president@gmail.com",
-    NotificationChannel.Email);
+var reportService = new ReportService(clubRepo, memberRepo);
 
-var member = clubService.AddMemberToClub(
-    club.Id,
-    "Nguyễn Văn A",
-    "a@student.dthu.edu.vn");
+var club = clubService.CreateClub("Tech Club", "Cau lac bo cong nghe", "president@gmail.com");
+clubService.AddMemberToClub(club.Id, "Nguyen Van A", "a@student.dthu.edu.vn");
+eventService.CreateEvent(club.Id, "Workshop SOLID", new DateTime(2026, 11, 20));
 
-// 4. Observer nhận thông báo khi tạo sự kiện.
-IEventObserver[] observers =
-{
-    new EmailNotifier(repository, factory),
-    new LogNotifier(logger)
-};
-
-var eventService = new EventService(repository, observers);
-
-var ev = eventService.CreateEvent(
-    club.Id,
-    "Workshop SOLID",
-    new DateTime(2026, 11, 20));
-
-Console.WriteLine($"\nCreated event: {ev.Title}");
-
-// 5. Strategy xuất báo cáo Console và CSV.
-var reportService = new ReportService(repository);
-
-Console.WriteLine("\n=== CONSOLE REPORT ===");
-Console.WriteLine(reportService.Generate(new ConsoleReportStrategy()));
-
-Console.WriteLine("\n=== CSV REPORT ===");
-Console.WriteLine(reportService.Generate(new CsvReportStrategy()));
-
-Console.WriteLine("\nDemo completed.");
+// Strategy: cung du lieu, 2 cach xuat khac nhau.
+reportService.GenerateReport(new ConsoleReportStrategy());
+reportService.GenerateReport(new CsvReportStrategy());
